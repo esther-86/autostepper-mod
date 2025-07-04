@@ -49,3 +49,7 @@ After extracting the beginner section, go through the section content and start 
 0000
 
 every other line, make it 0000
+
+Replace the processed beginner content in the original sm file
+
+I want extract to be separate from replace - not part of each other, otherwise, the function doesn't do just one job

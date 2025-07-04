@@ -190,11 +190,13 @@ class SmProcessor {
      * @param {Array} lines - The lines to print
      */
     printSectionContent(lines) {
+        /*
         console.log('=== Section Content ===');
         lines.forEach((line, index) => {
             console.log(`${index + 1}: ${line}`);
         });
         console.log('======================');
+        */
     }
 
     /**
@@ -244,11 +246,12 @@ class SmProcessor {
             const sections = this.parseSections(content);
 
             // Find and extract the Beginner content
-            sections.forEach(section => {
+            for (const section of sections) {
                 if (section.type === 'notes') {
-                    this.extractBeginnerFromSection(section);
+                    const result = this.extractBeginnerFromSection(section);
+                    // this.printSectionContent(result.content);
                 }
-            });
+            }
 
         } catch (error) {
             console.error(`Error extracting Beginner content from ${filePath}: ${error.message}`);
@@ -256,8 +259,9 @@ class SmProcessor {
     }
 
     /**
-     * Extract Beginner content from a notes section
+     * Extract Beginner content from a notes section (extraction only)
      * @param {Object} section - The section object
+     * @returns {Object} Object containing extraction results
      */
     extractBeginnerFromSection(section) {
         const lines = section.lines;
@@ -292,26 +296,7 @@ class SmProcessor {
                     if (this.isNextDifficultyLevel(trimmed)) {
                         inBeginner = false;
                         inDanceSingle = false; // Exit dance-single section too
-
-                        // Process and print the extracted content
-                        if (beginnerContent.length > 0) {
-                            console.log('\n=== Original Beginner Content ===');
-                            console.log('Beginner: 2:');
-                            beginnerContent.forEach(contentLine => {
-                                console.log(contentLine);
-                            });
-
-                            // Process the content
-                            const processedContent = this.processBeginnerContent(beginnerContent);
-
-                            console.log('\n=== Processed Beginner Content ===');
-                            console.log('Beginner: 2:');
-                            processedContent.forEach(contentLine => {
-                                console.log(contentLine);
-                            });
-                            console.log('================================\n');
-                        }
-                        continue;
+                        break;
                     }
 
                     // Add line to beginner content (skip the "2:" line)
@@ -322,24 +307,10 @@ class SmProcessor {
             }
         }
 
-        // If we found Beginner but didn't hit next difficulty, process and print what we have
-        if (foundBeginner && beginnerContent.length > 0) {
-            console.log('\n=== Original Beginner Content ===');
-            console.log('Beginner: 2:');
-            beginnerContent.forEach(contentLine => {
-                console.log(contentLine);
-            });
-
-            // Process the content
-            const processedContent = this.processBeginnerContent(beginnerContent);
-
-            console.log('\n=== Processed Beginner Content ===');
-            console.log('Beginner: 2:');
-            processedContent.forEach(contentLine => {
-                console.log(contentLine);
-            });
-            console.log('================================\n');
-        }
+        return {
+            found: foundBeginner,
+            content: beginnerContent
+        };
     }
 
     /**
@@ -385,6 +356,9 @@ class SmProcessor {
                 // Make every other line 0000
                 if (i % 2 === 1) {
                     processedLines.push('0000');
+                } else {
+                    // Keep the original line for even indices
+                    processedLines.push(line);
                 }
             } else {
                 // Keep non-step data lines as-is
@@ -403,6 +377,105 @@ class SmProcessor {
     isStepDataLine(line) {
         // Check if line contains only 0, 1, 2, and possibly spaces
         return /^[012\s]+$/.test(line);
+    }
+
+    /**
+     * Replace Beginner content in a .sm file
+     * @param {string} filePath - Path to the .sm file
+     * @param {Array} originalContent - Original Beginner content lines
+     * @param {Array} processedContent - Processed Beginner content lines
+     */
+    async replaceBeginnerContent(filePath, originalContent, processedContent) {
+        try {
+            // Read the file content
+            const content = await fs.readFile(filePath, 'utf8');
+            const lines = content.split('\n');
+
+            // Find the position of the original content in the file
+            const replacementInfo = this.findContentPosition(lines, originalContent);
+
+            if (replacementInfo.found) {
+                // Replace the original content with processed content
+                const newLines = [...lines];
+                newLines.splice(replacementInfo.startIndex, replacementInfo.length, ...processedContent);
+
+                // Write the modified content back to the file
+                const newContent = newLines.join('\n');
+                await fs.writeFile(filePath, newContent, 'utf8');
+
+                console.log(`Successfully replaced Beginner content in: ${filePath}`);
+            } else {
+                console.log(`Could not find original Beginner content to replace in: ${filePath}`);
+            }
+
+        } catch (error) {
+            console.error(`Error replacing Beginner content in ${filePath}: ${error.message}`);
+        }
+    }
+
+    /**
+     * Find the position of original content in the file lines
+     * @param {Array} fileLines - All lines in the file
+     * @param {Array} originalContent - Original content to find
+     * @returns {Object} Information about the position
+     */
+    findContentPosition(fileLines, originalContent) {
+        for (let i = 0; i <= fileLines.length - originalContent.length; i++) {
+            let match = true;
+
+            for (let j = 0; j < originalContent.length; j++) {
+                if (fileLines[i + j] !== originalContent[j]) {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match) {
+                return {
+                    found: true,
+                    startIndex: i,
+                    length: originalContent.length
+                };
+            }
+        }
+
+        return {
+            found: false,
+            startIndex: -1,
+            length: 0
+        };
+    }
+
+    /**
+     * Process and replace Beginner content in a .sm file
+     * @param {string} filePath - Path to the .sm file
+     */
+    async processAndReplaceBeginnerContent(filePath) {
+        try {
+            console.log(`Processing and replacing Beginner content in: ${filePath}`);
+
+            // Read the file content
+            const content = await fs.readFile(filePath, 'utf8');
+
+            // Parse the content into sections
+            const sections = this.parseSections(content);
+
+            // Find, process, and replace the Beginner content
+            for (const section of sections) {
+                if (section.type === 'notes') {
+                    const result = this.extractBeginnerFromSection(section);
+                    if (result.found && result.content.length > 0) {
+                        // Process the content
+                        const processedContent = this.processBeginnerContent(result.content);
+                        // Replace the original content with processed content
+                        await this.replaceBeginnerContent(filePath, result.content, processedContent);
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error(`Error processing and replacing Beginner content in ${filePath}: ${error.message}`);
+        }
     }
 }
 
