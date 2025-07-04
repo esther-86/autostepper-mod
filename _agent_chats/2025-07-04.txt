@@ -1,0 +1,2 @@
+JS node project that will loop through each directory like here "C:\Users\mysti\Desktop\Repositories\AutoStepper-Java-v1.7" (argument) and copy the .sm file to a .bak file
+
