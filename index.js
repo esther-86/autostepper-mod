@@ -3,7 +3,7 @@ const path = require('path');
 const SmProcessor = require('./smProcessor');
 
 /**
- * Creates backup files for all .sm files in a directory and its subdirectories
+ * Extracts Beginner content from all .sm files in a directory and its subdirectories
  * @param {string} directoryPath - The path to the directory to process
  */
 async function processSmFiles(directoryPath) {
@@ -22,20 +22,19 @@ async function processSmFiles(directoryPath) {
         // Filter for .sm files
         const smFiles = files.filter(file => path.extname(file).toLowerCase() === '.sm');
 
-        console.log(`Found ${smFiles.length} .sm files to backup.`);
+        console.log(`Found ${smFiles.length} .sm files to process.`);
 
-        // Create backup for each .sm file
+        // Extract Beginner content from each .sm file
         const smProcessor = new SmProcessor();
         for (const filePath of smFiles) {
-            // await createBackup(filePath);
-            // Process the .sm file after backup
-            await smProcessor.processSmFile(filePath);
+            // Extract and print Beginner content
+            await smProcessor.extractBeginnerContent(filePath);
         }
 
-        console.log('Backup process completed successfully!');
+        console.log('Extraction process completed successfully!');
 
     } catch (error) {
-        console.error('Error during backup process:', error.message);
+        console.error('Error during extraction process:', error.message);
     }
 }
 

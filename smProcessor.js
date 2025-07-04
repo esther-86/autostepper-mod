@@ -228,6 +228,119 @@ class SmProcessor {
             console.error(`Error reading ${filePath}: ${error.message}`);
         }
     }
+
+    /**
+     * Extract and print content between "Beginner: 2:" and the next difficulty level
+     * @param {string} filePath - Path to the .sm file
+     */
+    async extractBeginnerContent(filePath) {
+        try {
+            console.log(`Extracting Beginner content from: ${filePath}`);
+
+            // Read the file content
+            const content = await fs.readFile(filePath, 'utf8');
+
+            // Parse the content into sections
+            const sections = this.parseSections(content);
+
+            // Find and extract the Beginner content
+            sections.forEach(section => {
+                if (section.type === 'notes') {
+                    this.extractBeginnerFromSection(section);
+                }
+            });
+
+        } catch (error) {
+            console.error(`Error extracting Beginner content from ${filePath}: ${error.message}`);
+        }
+    }
+
+    /**
+     * Extract Beginner content from a notes section
+     * @param {Object} section - The section object
+     */
+    extractBeginnerFromSection(section) {
+        const lines = section.lines;
+        let inDanceSingle = false;
+        let inBeginner = false;
+        let beginnerContent = [];
+        let foundBeginner = false;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const trimmed = line.trim();
+
+            // Check if we're entering a dance-single section
+            if (trimmed === 'dance-single:') {
+                inDanceSingle = true;
+                continue;
+            }
+
+            // If we're in a dance-single section, look for Beginner
+            if (inDanceSingle) {
+                // Check if this is the Beginner: 2: line
+                if (trimmed === 'Beginner:') {
+                    inBeginner = true;
+                    foundBeginner = true;
+                    beginnerContent = []; // Reset content
+                    continue;
+                }
+
+                // If we're in Beginner section, collect content
+                if (inBeginner) {
+                    // Check if we've hit the next difficulty level
+                    if (this.isNextDifficultyLevel(trimmed)) {
+                        inBeginner = false;
+                        inDanceSingle = false; // Exit dance-single section too
+
+                        // Print the extracted content
+                        if (beginnerContent.length > 0) {
+                            console.log('\n=== Beginner Content Extracted ===');
+                            console.log('Beginner: 2:');
+                            beginnerContent.forEach(contentLine => {
+                                console.log(contentLine);
+                            });
+                            console.log('================================\n');
+                        }
+                        continue;
+                    }
+
+                    // Add line to beginner content (skip the "2:" line)
+                    if (trimmed !== '2:') {
+                        beginnerContent.push(line);
+                    }
+                }
+            }
+        }
+
+        // If we found Beginner but didn't hit next difficulty, print what we have
+        if (foundBeginner && beginnerContent.length > 0) {
+            console.log('\n=== Beginner Content Extracted ===');
+            console.log('Beginner: 2:');
+            beginnerContent.forEach(contentLine => {
+                console.log(contentLine);
+            });
+            console.log('================================\n');
+        }
+    }
+
+    /**
+     * Check if a line indicates the next difficulty level
+     * @param {string} line - The line to check
+     * @returns {boolean} True if it's the next difficulty level
+     */
+    isNextDifficultyLevel(line) {
+        const difficultyLevels = [
+            'Easy:',
+            'Medium:',
+            'Hard:',
+            'Challenge:',
+            'Expert:',
+            'Master:'
+        ];
+
+        return difficultyLevels.some(level => line === level);
+    }
 }
 
 module.exports = SmProcessor; 
