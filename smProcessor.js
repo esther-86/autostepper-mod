@@ -293,11 +293,20 @@ class SmProcessor {
                         inBeginner = false;
                         inDanceSingle = false; // Exit dance-single section too
 
-                        // Print the extracted content
+                        // Process and print the extracted content
                         if (beginnerContent.length > 0) {
-                            console.log('\n=== Beginner Content Extracted ===');
+                            console.log('\n=== Original Beginner Content ===');
                             console.log('Beginner: 2:');
                             beginnerContent.forEach(contentLine => {
+                                console.log(contentLine);
+                            });
+
+                            // Process the content
+                            const processedContent = this.processBeginnerContent(beginnerContent);
+
+                            console.log('\n=== Processed Beginner Content ===');
+                            console.log('Beginner: 2:');
+                            processedContent.forEach(contentLine => {
                                 console.log(contentLine);
                             });
                             console.log('================================\n');
@@ -313,11 +322,20 @@ class SmProcessor {
             }
         }
 
-        // If we found Beginner but didn't hit next difficulty, print what we have
+        // If we found Beginner but didn't hit next difficulty, process and print what we have
         if (foundBeginner && beginnerContent.length > 0) {
-            console.log('\n=== Beginner Content Extracted ===');
+            console.log('\n=== Original Beginner Content ===');
             console.log('Beginner: 2:');
             beginnerContent.forEach(contentLine => {
+                console.log(contentLine);
+            });
+
+            // Process the content
+            const processedContent = this.processBeginnerContent(beginnerContent);
+
+            console.log('\n=== Processed Beginner Content ===');
+            console.log('Beginner: 2:');
+            processedContent.forEach(contentLine => {
                 console.log(contentLine);
             });
             console.log('================================\n');
@@ -340,6 +358,51 @@ class SmProcessor {
         ];
 
         return difficultyLevels.some(level => line === level);
+    }
+
+    /**
+     * Process the Beginner content by applying transformations
+     * @param {Array} contentLines - Array of content lines to process
+     * @returns {Array} Processed content lines
+     */
+    processBeginnerContent(contentLines) {
+        const processedLines = [];
+
+        for (let i = 0; i < contentLines.length; i++) {
+            const line = contentLines[i];
+            const trimmed = line.trim();
+
+            // Skip empty lines or lines that don't contain step data
+            if (!trimmed || trimmed === ',' || trimmed === ';') {
+                processedLines.push(line);
+                continue;
+            }
+
+            // Check if this is a step data line (contains 0, 1, 2, or 3)
+            // 2: Start of a hold
+            // 3: End of a hold
+            if (this.isStepDataLine(trimmed)) {
+                // Make every other line 0000
+                if (i % 2 === 1) {
+                    processedLines.push('0000');
+                }
+            } else {
+                // Keep non-step data lines as-is
+                processedLines.push(line);
+            }
+        }
+
+        return processedLines;
+    }
+
+    /**
+     * Check if a line contains step data (0s, 1s, and 2s)
+     * @param {string} line - The line to check
+     * @returns {boolean} True if it's step data
+     */
+    isStepDataLine(line) {
+        // Check if line contains only 0, 1, 2, and possibly spaces
+        return /^[012\s]+$/.test(line);
     }
 }
 

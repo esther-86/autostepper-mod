@@ -19,3 +19,33 @@ and not touch other sections, like
 
 It need to identify that section and print out the content of that section using a utility function
 
+I need it to extract the content between  Beginner: 2: and the next level and print it out
+
+After extracting the beginner section, go through the section content and start processing:
+
+0000
+0010
+1000
+0000
+,
+1001
+1000
+0001
+1000
+,
+0001
+1000
+0100
+0000
+,
+0010
+0000
+1000
+0001
+,
+0010
+0100
+0001
+0000
+
+every other line, make it 0000
