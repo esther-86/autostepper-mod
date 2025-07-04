@@ -1,2 +1,21 @@
 JS node project that will loop through each directory like here "C:\Users\mysti\Desktop\Repositories\AutoStepper-Java-v1.7" (argument) and copy the .sm file to a .bak file
 
+Create a new class to process the .sm file after creating the .bak file
+It will only modify things in the following section 
+
+     dance-single:
+     :
+     Beginner:
+     2:
+
+and not touch other sections, like
+
+//---------------dance-single - ----------------
+#NOTES:
+     dance-single:
+     :
+     Easy:
+     4:
+
+It need to identify that section and print out the content of that section using a utility function
+

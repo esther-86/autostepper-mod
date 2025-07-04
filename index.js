@@ -1,11 +1,12 @@
 const fs = require('fs-extra');
 const path = require('path');
+const SmProcessor = require('./smProcessor');
 
 /**
  * Creates backup files for all .sm files in a directory and its subdirectories
  * @param {string} directoryPath - The path to the directory to process
  */
-async function backupSmFiles(directoryPath) {
+async function processSmFiles(directoryPath) {
     try {
         // Check if the directory exists
         if (!await fs.pathExists(directoryPath)) {
@@ -24,8 +25,11 @@ async function backupSmFiles(directoryPath) {
         console.log(`Found ${smFiles.length} .sm files to backup.`);
 
         // Create backup for each .sm file
+        const smProcessor = new SmProcessor();
         for (const filePath of smFiles) {
-            await createBackup(filePath);
+            // await createBackup(filePath);
+            // Process the .sm file after backup
+            await smProcessor.processSmFile(filePath);
         }
 
         console.log('Backup process completed successfully!');
@@ -108,7 +112,7 @@ function main() {
     }
 
     // Start the backup process
-    backupSmFiles(directoryPath);
+    processSmFiles(directoryPath);
 }
 
 // Run the script if called directly
@@ -116,4 +120,4 @@ if (require.main === module) {
     main();
 }
 
-module.exports = { backupSmFiles, getAllFiles, createBackup }; 
+module.exports = { processSmFiles, getAllFiles, createBackup }; 
