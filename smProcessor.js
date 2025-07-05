@@ -4,25 +4,16 @@ const fs = require('fs-extra');
  * Class to process .sm files and modify specific sections
  */
 class SmProcessor {
-    constructor(replace = false) {
-        this.replace = replace;
-        this.targetSection = {
-            style: 'dance-single:',
-            difficulty: 'Beginner:',
-            steps: '2:'
-        };
-        this.newSection = {
-            style: 'dance-single:',
-            difficulty: 'Beginner:',
-            steps: '1:'
-        };
+    constructor() {
+        // No parameters needed in constructor
     }
 
     /**
      * Process a .sm file after backup creation
      * @param {string} filePath - Path to the .sm file
+     * @param {Object} targetSection - The target section to process
      */
-    async processSmFile(filePath) {
+    async processSmFile(filePath, targetSection) {
         try {
             console.log(`Processing .sm file: ${filePath}`);
 
@@ -33,7 +24,7 @@ class SmProcessor {
             const sections = this.parseSections(content);
 
             // Find and process the target section
-            const processedSections = this.processSections(sections);
+            const processedSections = this.processSections(sections, targetSection);
 
             // Reconstruct the file content
             const newContent = this.reconstructContent(processedSections);
@@ -125,12 +116,13 @@ class SmProcessor {
     /**
      * Process sections and identify target sections
      * @param {Array} sections - Array of section objects
+     * @param {Object} targetSection - The target section to look for
      * @returns {Array} Processed sections
      */
-    processSections(sections) {
+    processSections(sections, targetSection) {
         return sections.map(section => {
             if (section.type === 'notes') {
-                const processedSection = this.processNotesSection(section);
+                const processedSection = this.processNotesSection(section, targetSection);
                 if (processedSection.isTarget) {
                     console.log(`Found target section in ${section.type}:`);
                     this.printSectionContent(processedSection.lines);
@@ -144,9 +136,10 @@ class SmProcessor {
     /**
      * Process a notes section to identify target sections
      * @param {Object} section - The section object
+     * @param {Object} targetSection - The target section to look for
      * @returns {Object} Processed section
      */
-    processNotesSection(section) {
+    processNotesSection(section, targetSection) {
         const lines = [...section.lines];
         const processedLines = [];
         let isTarget = false;
@@ -158,7 +151,7 @@ class SmProcessor {
             const trimmed = line.trim();
 
             // Check if this line starts a dance-single subsection
-            if (trimmed === this.targetSection.style) {
+            if (trimmed === targetSection.style) {
                 inTargetSubsection = true;
                 subsectionLines = [line];
             } else if (inTargetSubsection) {
@@ -170,9 +163,9 @@ class SmProcessor {
                     const difficultyLine = subsectionLines[2].trim();
                     const stepsLine = subsectionLines[3].trim();
 
-                    if (styleLine === this.targetSection.style &&
-                        difficultyLine === this.targetSection.difficulty &&
-                        stepsLine === this.targetSection.steps) {
+                    if (styleLine === targetSection.style &&
+                        difficultyLine === targetSection.difficulty &&
+                        stepsLine === targetSection.steps) {
                         isTarget = true;
                         console.log(`Target section identified: ${styleLine} ${difficultyLine} ${stepsLine}`);
                     }
@@ -217,15 +210,16 @@ class SmProcessor {
     /**
      * Utility function to print section content (can be called externally)
      * @param {string} filePath - Path to the .sm file
+     * @param {Object} targetSection - The target section to look for
      */
-    async printTargetSection(filePath) {
+    async printTargetSection(filePath, targetSection) {
         try {
             const content = await fs.readFile(filePath, 'utf8');
             const sections = this.parseSections(content);
 
             sections.forEach(section => {
                 if (section.type === 'notes') {
-                    const processed = this.processNotesSection(section);
+                    const processed = this.processNotesSection(section, targetSection);
                     if (processed.isTarget) {
                         console.log(`\nTarget section found in ${filePath}:`);
                         this.printSectionContent(processed.targetSubsection);
@@ -238,12 +232,13 @@ class SmProcessor {
     }
 
     /**
-     * Extract and print content between "Beginner: 2:" and the next difficulty level
+     * Extract and print content between target difficulty and the next difficulty level
      * @param {string} filePath - Path to the .sm file
+     * @param {Object} targetSection - The target section to extract
      */
-    async extractBeginnerContent(filePath) {
+    async extractBeginnerContent(filePath, targetSection) {
         try {
-            console.log(`Extracting Beginner content from: ${filePath}`);
+            console.log(`Extracting ${targetSection.difficulty} content from: ${filePath}`);
 
             // Read the file content
             const content = await fs.readFile(filePath, 'utf8');
@@ -251,30 +246,31 @@ class SmProcessor {
             // Parse the content into sections
             const sections = this.parseSections(content);
 
-            // Find and extract the Beginner content
+            // Find and extract the target content
             for (const section of sections) {
                 if (section.type === 'notes') {
-                    const result = this.extractBeginnerFromSection(section);
+                    const result = this.extractTargetFromSection(section, targetSection);
                     // this.printSectionContent(result.content);
                 }
             }
 
         } catch (error) {
-            console.error(`Error extracting Beginner content from ${filePath}: ${error.message}`);
+            console.error(`Error extracting ${targetSection.difficulty} content from ${filePath}: ${error.message}`);
         }
     }
 
     /**
-     * Extract Beginner content from a notes section (extraction only)
+     * Extract target content from a notes section (extraction only)
      * @param {Object} section - The section object
+     * @param {Object} targetSection - The target section to extract
      * @returns {Object} Object containing extraction results
      */
-    extractBeginnerFromSection(section) {
+    extractTargetFromSection(section, targetSection) {
         const lines = section.lines;
         let inDanceSingle = false;
-        let inBeginner = false;
-        let beginnerContent = [];
-        let foundBeginner = false;
+        let inTarget = false;
+        let targetContent = [];
+        let foundTarget = false;
 
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i];
@@ -286,36 +282,36 @@ class SmProcessor {
                 continue;
             }
 
-            // If we're in a dance-single section, look for Beginner
+            // If we're in a dance-single section, look for target difficulty
             if (inDanceSingle) {
-                // Check if this is the Beginner: 2: line
-                if (trimmed === 'Beginner:') {
-                    inBeginner = true;
-                    foundBeginner = true;
-                    beginnerContent = []; // Reset content
+                // Check if this is the target difficulty line
+                if (trimmed === targetSection.difficulty) {
+                    inTarget = true;
+                    foundTarget = true;
+                    targetContent = []; // Reset content
                     continue;
                 }
 
-                // If we're in Beginner section, collect content
-                if (inBeginner) {
+                // If we're in target section, collect content
+                if (inTarget) {
                     // Check if we've hit the next difficulty level
                     if (this.isNextDifficultyLevel(trimmed)) {
-                        inBeginner = false;
+                        inTarget = false;
                         inDanceSingle = false; // Exit dance-single section too
                         break;
                     }
 
-                    // Add line to beginner content (skip the "2:" line)
-                    if (trimmed !== '2:') {
-                        beginnerContent.push(line);
+                    // Add line to target content (skip the steps line)
+                    if (trimmed !== targetSection.steps) {
+                        targetContent.push(line);
                     }
                 }
             }
         }
 
         return {
-            found: foundBeginner,
-            content: beginnerContent
+            found: foundTarget,
+            content: targetContent
         };
     }
 
@@ -397,12 +393,12 @@ class SmProcessor {
     }
 
     /**
-     * Replace Beginner content in a .sm file
+     * Replace target content in a .sm file
      * @param {string} filePath - Path to the .sm file
-     * @param {Array} originalContent - Original Beginner content lines
-     * @param {Array} processedContent - Processed Beginner content lines
+     * @param {Array} originalContent - Original target content lines
+     * @param {Array} processedContent - Processed target content lines
      */
-    async replaceBeginnerContent(filePath, originalContent, processedContent) {
+    async replaceTargetContent(filePath, originalContent, processedContent) {
         try {
             // Read the file content
             const content = await fs.readFile(filePath, 'utf8');
@@ -420,13 +416,13 @@ class SmProcessor {
                 const newContent = newLines.join('\n');
                 await fs.writeFile(filePath, newContent, 'utf8');
 
-                console.log(`Successfully replaced Beginner content in: ${filePath}`);
+                console.log(`Successfully replaced target content in: ${filePath}`);
             } else {
-                console.log(`Could not find original Beginner content to replace in: ${filePath}`);
+                console.log(`Could not find original target content to replace in: ${filePath}`);
             }
 
         } catch (error) {
-            console.error(`Error replacing Beginner content in ${filePath}: ${error.message}`);
+            console.error(`Error replacing target content in ${filePath}: ${error.message}`);
         }
     }
 
@@ -464,13 +460,46 @@ class SmProcessor {
     }
 
     /**
-     * Process and handle Beginner content in a .sm file (replace or insert based on mode)
+     * Process and handle Beginner content in a .sm file
      * @param {string} filePath - Path to the .sm file
+     * @param {string} sectionToExtract - Section to extract as "Beginner:2"
+     * @param {string} action - Action can be "Insert before" or "Insert After"
+     * @param {string} newSectionName - Insert as "Novice:1", or "Beginner:3" etc. first is the level, then the step level
      */
-    async processAndHandleBeginnerContent(filePath) {
+    async processAndHandleBeginnerContent(filePath, sectionToExtract, action, newSectionName) {
         try {
-            const mode = this.replace ? 'replacing' : 'inserting';
-            console.log(`Processing and ${mode} Beginner content in: ${filePath}`);
+            // Debug logging
+            console.log('Debug - Parameters received:');
+            console.log('filePath:', filePath);
+            console.log('sectionToExtract:', sectionToExtract);
+            console.log('action:', action);
+            console.log('newSectionName:', newSectionName);
+
+            // Validate parameters
+            if (!sectionToExtract || !action || !newSectionName) {
+                throw new Error(`Missing required parameters: sectionToExtract=${sectionToExtract}, action=${action}, newSectionName=${newSectionName}`);
+            }
+
+            // Parse the section to extract
+            const [difficulty, steps] = sectionToExtract.split(':');
+            const targetSection = {
+                style: 'dance-single:',
+                difficulty: `${difficulty}:`,
+                steps: `${steps}:`
+            };
+
+            // Parse the insert as section
+            const [insertDifficulty, insertSteps] = newSectionName.split(':');
+            const newSection = {
+                style: 'dance-single:',
+                difficulty: `${insertDifficulty}:`,
+                steps: `${insertSteps}:`
+            };
+
+            // Determine if this is a replace or insert operation
+            const isReplace = action.toLowerCase().includes('replace');
+            const mode = isReplace ? 'replacing' : 'inserting';
+            console.log(`Processing and ${mode} ${difficulty} content in: ${filePath}`);
 
             // Read the file content
             const content = await fs.readFile(filePath, 'utf8');
@@ -478,27 +507,27 @@ class SmProcessor {
             // Parse the content into sections
             const sections = this.parseSections(content);
 
-            // Find and process the Beginner content
+            // Find and process the target content
             for (const section of sections) {
                 if (section.type === 'notes') {
-                    const result = this.extractBeginnerFromSection(section);
+                    const result = this.extractTargetFromSection(section, targetSection);
                     if (result.found && result.content.length > 0) {
                         // Process the content
                         const processedContent = this.processBeginnerContent(result.content);
 
-                        if (this.replace) {
+                        if (isReplace) {
                             // Replace the original content with processed content
-                            await this.replaceBeginnerContent(filePath, result.content, processedContent);
+                            await this.replaceTargetContent(filePath, result.content, processedContent);
                         } else {
                             // Insert new section with processed content
-                            await this.insertBeginnerContent(filePath, processedContent);
+                            await this.insertTargetContent(filePath, processedContent, newSection, action);
                         }
                     }
                 }
             }
 
         } catch (error) {
-            console.error(`Error processing and handling Beginner content in ${filePath}: ${error.message}`);
+            console.error(`Error processing and handling content in ${filePath}: ${error.message}`);
         }
     }
 
@@ -525,28 +554,39 @@ class SmProcessor {
     }
 
     /**
-     * Insert new Beginner content in a .sm file after #ATTACKS:;
+     * Insert new target content in a .sm file
      * @param {string} filePath - Path to the .sm file
-     * @param {Array} processedContent - Processed Beginner content lines
+     * @param {Array} processedContent - Processed target content lines
+     * @param {Object} newSection - The new section configuration
+     * @param {string} action - Action can be "Insert before" or "Insert After"
      */
-    async insertBeginnerContent(filePath, processedContent) {
+    async insertTargetContent(filePath, processedContent, newSection, action) {
         try {
             // Read the file content
             const content = await fs.readFile(filePath, 'utf8');
             const lines = content.split('\n');
 
-            // Find the position after #ATTACKS:;
-            const insertInfo = this.findAttacksPosition(lines);
+            let insertInfo;
+            if (action.toLowerCase().includes('before')) {
+                // Find the position before #ATTACKS:;
+                insertInfo = this.findAttacksPosition(lines);
+                if (insertInfo.found) {
+                    insertInfo.startIndex = insertInfo.startIndex - 1; // Position before #ATTACKS:;
+                }
+            } else {
+                // Find the position after #ATTACKS:;
+                insertInfo = this.findAttacksPosition(lines);
+            }
 
             if (insertInfo.found) {
                 // Create the new section content
                 const newSectionContent = [
                     '',
                     '//',
-                    this.newSection.style,
+                    newSection.style,
                     '',
-                    this.newSection.difficulty,
-                    this.newSection.steps,
+                    newSection.difficulty,
+                    newSection.steps,
                     ...processedContent,
                     ';'
                 ];
@@ -559,13 +599,13 @@ class SmProcessor {
                 const newContent = newLines.join('\n');
                 await fs.writeFile(filePath, newContent, 'utf8');
 
-                console.log(`Successfully inserted new Beginner content in: ${filePath}`);
+                console.log(`Successfully inserted new ${newSection.difficulty} content in: ${filePath}`);
             } else {
-                console.log(`Could not find #ATTACKS:; to insert new Beginner content in: ${filePath}`);
+                console.log(`Could not find #ATTACKS:; to insert new content in: ${filePath}`);
             }
 
         } catch (error) {
-            console.error(`Error inserting Beginner content in ${filePath}: ${error.message}`);
+            console.error(`Error inserting target content in ${filePath}: ${error.message}`);
         }
     }
 }

@@ -24,29 +24,31 @@ describe('SmProcessor', () => {
     });
 
     const testCases = [
-        /*
         {
             name: 'should insert new Beginner section with steps: 1:',
-            replace: false,
+            sectionToExtract: 'Beginner:2',
+            action: 'Insert Before',
+            newSectionName: 'Novice:1',
             expectedFile: insertedFile,
             description: 'Insert Mode'
         },
-        */
         {
             name: 'should replace Beginner section with steps: 2:',
-            replace: true,
+            sectionToExtract: 'Beginner:2',
+            action: 'Replace',
+            newSectionName: 'Beginner:2',
             expectedFile: replacedFile,
             description: 'Replace Mode'
         }
     ];
 
-    test.each(testCases)('$description - $name', async ({ replace, expectedFile }) => {
+    test.each(testCases)('$description - $name', async ({ sectionToExtract, action, newSectionName, expectedFile }) => {
         // 1. Copy .bak to .sm
         await fs.copy(backupFile, tempSmFile);
 
         // 2. Process with specified mode
-        const processor = new SmProcessor(replace);
-        await processor.processAndHandleBeginnerContent(tempSmFile);
+        const processor = new SmProcessor();
+        await processor.processAndHandleBeginnerContent(tempSmFile, sectionToExtract, action, newSectionName);
 
         // 3. Content should match expected file
         const actualContent = await fs.readFile(tempSmFile, 'utf8');

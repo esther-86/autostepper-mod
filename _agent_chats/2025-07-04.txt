@@ -92,3 +92,15 @@ Test replace:
 Parameterize the test to replace param and expectedFile param so that it reduces test code duplication
 
 Fix so that the tests pass. Keep the logic and comments in existing smProcessor.js so that the replace is every other line, unless the previous line is 0000 or this line contains 3. Look in the text file for existing context.
+
+
+Fix smProcessor so that
+
+it doesn't have this in the constructor
+constructor(replace = false)
+
+but in processAndHandleBeginnerContent, which will take in 
+1. filePath
+2. section to extract as "Beginner:2"
+3. action can be "Insert before" or "Insert After"
+4. newSectionName "Novice:1", or "Beginner:3" etc. first is the level, then the step level
