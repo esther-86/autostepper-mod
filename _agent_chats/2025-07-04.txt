@@ -53,3 +53,10 @@ every other line, make it 0000
 Replace the processed beginner content in the original sm file
 
 I want extract to be separate from replace - not part of each other, otherwise, the function doesn't do just one job
+
+2025-07-25
+Fix it to not replace every other line, but go through it, 
+Keep track of previous line
+We are on current line.
+If line has a 3, don't replace it
+Only if previous line is not 0000 and conditions satisfy, then we replace this line with 0000

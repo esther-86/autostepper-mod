@@ -338,6 +338,7 @@ class SmProcessor {
      */
     processBeginnerContent(contentLines) {
         const processedLines = [];
+        let previousLine = null;
 
         for (let i = 0; i < contentLines.length; i++) {
             const line = contentLines[i];
@@ -353,12 +354,22 @@ class SmProcessor {
             // 2: Start of a hold
             // 3: End of a hold
             if (this.isStepDataLine(trimmed)) {
-                // Make every other line 0000
-                if (i % 2 === 1) {
-                    processedLines.push('0000');
-                } else {
-                    // Keep the original line for even indices
+                // Don't replace lines that contain a '3'
+                if (trimmed.includes('3')) {
                     processedLines.push(line);
+                } else {
+                    // Only replace with '0000' if previous line is not '0000'
+                    const previousTrimmed = previousLine ? previousLine.trim() : null;
+                    if (previousTrimmed !== '0000') {
+                        processedLines.push('0000');
+                        // Update previous line for next iteration
+                        previousLine = '0000';
+                    } else {
+                        // Keep the original line if previous line was '0000'
+                        processedLines.push(line);
+                        // Update previous line for next iteration
+                        previousLine = line;
+                    }
                 }
             } else {
                 // Keep non-step data lines as-is
