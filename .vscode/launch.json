@@ -8,7 +8,8 @@
             "program": "${workspaceFolder}/index.js",
             "args": [
                 "process",
-                "C:\\Users\\mysti\\Desktop\\Repositories\\autostepper-test"
+                "Z:\\Processed",
+                // "C:\\Users\\mysti\\Desktop\\Repositories\\autostepper-test"
             ],
             "console": "integratedTerminal",
             "internalConsoleOptions": "neverOpen",
@@ -17,6 +18,44 @@
             ],
             "env": {
                 "NODE_ENV": "development"
+            }
+        },
+        {
+            "name": "Run Tests",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+            "args": [
+                "--runInBand",
+                "--no-cache"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "NODE_ENV": "test"
+            }
+        },
+        {
+            "name": "Debug Tests",
+            "type": "node",
+            "request": "launch",
+            "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+            "args": [
+                "--runInBand",
+                "--no-cache",
+                "--detectOpenHandles",
+                "--testTimeout=0"
+            ],
+            "console": "integratedTerminal",
+            "internalConsoleOptions": "neverOpen",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "env": {
+                "NODE_ENV": "test"
             }
         }
     ]

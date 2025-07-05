@@ -90,3 +90,5 @@ Test replace:
 3. Content should match C:\Users\mysti\Desktop\Repositories\autostepper-mod\tests\CẮT ĐÔI NỖI SẦU.mp3.replaced
 
 Parameterize the test to replace param and expectedFile param so that it reduces test code duplication
+
+Fix so that the tests pass. Keep the logic and comments in existing smProcessor.js so that the replace is every other line, unless the previous line is 0000 or this line contains 3. Look in the text file for existing context.

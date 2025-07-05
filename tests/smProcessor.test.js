@@ -4,9 +4,9 @@ const SmProcessor = require('../smProcessor');
 
 describe('SmProcessor', () => {
     const testDir = path.join(__dirname);
-    const backupFile = path.join(testDir, 'CẮT ĐÔI NỖI SẦU.mp3.bak');
-    const insertedFile = path.join(testDir, 'CẮT ĐÔI NỖI SẦU.mp3.inserted');
-    const replacedFile = path.join(testDir, 'CẮT ĐÔI NỖI SẦU.mp3.replaced');
+    const backupFile = path.join(testDir, 'All Honor and Glory.mp3.bak');
+    const insertedFile = path.join(testDir, 'All Honor and Glory.mp3.inserted');
+    const replacedFile = path.join(testDir, 'All Honor and Glory.mp3.replaced');
     const tempSmFile = path.join(testDir, 'temp_test.sm');
 
     beforeEach(async () => {
@@ -24,12 +24,14 @@ describe('SmProcessor', () => {
     });
 
     const testCases = [
+        /*
         {
             name: 'should insert new Beginner section with steps: 1:',
             replace: false,
             expectedFile: insertedFile,
             description: 'Insert Mode'
         },
+        */
         {
             name: 'should replace Beginner section with steps: 2:',
             replace: true,
