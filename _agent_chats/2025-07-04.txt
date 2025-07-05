@@ -60,3 +60,18 @@ Keep track of previous line
 We are on current line.
 If line has a 3, don't replace it
 Only if previous line is not 0000 and conditions satisfy, then we replace this line with 0000
+
+C:\Users\mysti\Desktop\Repositories\autostepper-test\CẮT ĐÔI NỖI SẦU.mp3_dir\CẮT ĐÔI NỖI SẦU.mp3.sm
+
+Instead of replace the section, make the processed section into 
+     Beginner:
+     1:
+
+instead of 
+
+     Beginner:
+     2:
+
+and insert the section between after the #ATTACKS:;
+
+instead of replacing, based on a variable value, default to replace=false

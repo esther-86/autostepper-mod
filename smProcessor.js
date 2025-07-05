@@ -4,11 +4,17 @@ const fs = require('fs-extra');
  * Class to process .sm files and modify specific sections
  */
 class SmProcessor {
-    constructor() {
+    constructor(replace = false) {
+        this.replace = replace;
         this.targetSection = {
             style: 'dance-single:',
             difficulty: 'Beginner:',
             steps: '2:'
+        };
+        this.newSection = {
+            style: 'dance-single:',
+            difficulty: 'Beginner:',
+            steps: '1:'
         };
     }
 
@@ -458,12 +464,13 @@ class SmProcessor {
     }
 
     /**
-     * Process and replace Beginner content in a .sm file
+     * Process and handle Beginner content in a .sm file (replace or insert based on mode)
      * @param {string} filePath - Path to the .sm file
      */
-    async processAndReplaceBeginnerContent(filePath) {
+    async processAndHandleBeginnerContent(filePath) {
         try {
-            console.log(`Processing and replacing Beginner content in: ${filePath}`);
+            const mode = this.replace ? 'replacing' : 'inserting';
+            console.log(`Processing and ${mode} Beginner content in: ${filePath}`);
 
             // Read the file content
             const content = await fs.readFile(filePath, 'utf8');
@@ -471,21 +478,94 @@ class SmProcessor {
             // Parse the content into sections
             const sections = this.parseSections(content);
 
-            // Find, process, and replace the Beginner content
+            // Find and process the Beginner content
             for (const section of sections) {
                 if (section.type === 'notes') {
                     const result = this.extractBeginnerFromSection(section);
                     if (result.found && result.content.length > 0) {
                         // Process the content
                         const processedContent = this.processBeginnerContent(result.content);
-                        // Replace the original content with processed content
-                        await this.replaceBeginnerContent(filePath, result.content, processedContent);
+
+                        if (this.replace) {
+                            // Replace the original content with processed content
+                            await this.replaceBeginnerContent(filePath, result.content, processedContent);
+                        } else {
+                            // Insert new section with processed content
+                            await this.insertBeginnerContent(filePath, processedContent);
+                        }
                     }
                 }
             }
 
         } catch (error) {
-            console.error(`Error processing and replacing Beginner content in ${filePath}: ${error.message}`);
+            console.error(`Error processing and handling Beginner content in ${filePath}: ${error.message}`);
+        }
+    }
+
+    /**
+     * Find the position after #ATTACKS:; in the file
+     * @param {Array} fileLines - All lines in the file
+     * @returns {Object} Information about the position
+     */
+    findAttacksPosition(fileLines) {
+        for (let i = 0; i < fileLines.length; i++) {
+            const line = fileLines[i].trim();
+            if (line === '#ATTACKS:;') {
+                return {
+                    found: true,
+                    startIndex: i + 1 // Position after the #ATTACKS:; line
+                };
+            }
+        }
+
+        return {
+            found: false,
+            startIndex: -1
+        };
+    }
+
+    /**
+     * Insert new Beginner content in a .sm file after #ATTACKS:;
+     * @param {string} filePath - Path to the .sm file
+     * @param {Array} processedContent - Processed Beginner content lines
+     */
+    async insertBeginnerContent(filePath, processedContent) {
+        try {
+            // Read the file content
+            const content = await fs.readFile(filePath, 'utf8');
+            const lines = content.split('\n');
+
+            // Find the position after #ATTACKS:;
+            const insertInfo = this.findAttacksPosition(lines);
+
+            if (insertInfo.found) {
+                // Create the new section content
+                const newSectionContent = [
+                    '',
+                    '//',
+                    this.newSection.style,
+                    '',
+                    this.newSection.difficulty,
+                    this.newSection.steps,
+                    ...processedContent,
+                    ';'
+                ];
+
+                // Insert the new content
+                const newLines = [...lines];
+                newLines.splice(insertInfo.startIndex, 0, ...newSectionContent);
+
+                // Write the modified content back to the file
+                const newContent = newLines.join('\n');
+                await fs.writeFile(filePath, newContent, 'utf8');
+
+                console.log(`Successfully inserted new Beginner content in: ${filePath}`);
+            } else {
+                console.log(`Could not find #ATTACKS:; to insert new Beginner content in: ${filePath}`);
+            }
+
+        } catch (error) {
+            console.error(`Error inserting Beginner content in ${filePath}: ${error.message}`);
         }
     }
 }

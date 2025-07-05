@@ -7,7 +7,7 @@ const SmProcessor = require('./smProcessor');
  * @param {string} directoryPath - The path to the directory to process
  * @param {string} mode - The processing mode ('extract' or 'process')
  */
-async function processSmFiles(directoryPath, mode = 'extract') {
+async function processSmFiles(directoryPath, mode = 'process') {
     try {
         // Check if the directory exists
         if (!await fs.pathExists(directoryPath)) {
@@ -32,7 +32,7 @@ async function processSmFiles(directoryPath, mode = 'extract') {
             if (mode === 'process') {
                 await createBackup(filePath);
                 // Process and replace Beginner content
-                await smProcessor.processAndReplaceBeginnerContent(filePath);
+                await smProcessor.processAndHandleBeginnerContent(filePath);
             } else {
                 // Extract and print Beginner content only
                 await smProcessor.extractBeginnerContent(filePath);
@@ -115,7 +115,7 @@ function main() {
         process.exit(1);
     }
 
-    const mode = args[0] || 'extract'; // Default to extract mode
+    const mode = args[0] || 'process'; // Default to extract mode
     const directoryPath = args[1];
 
     // Validate the path
