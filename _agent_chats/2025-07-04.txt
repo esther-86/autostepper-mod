@@ -75,3 +75,18 @@ instead of
 and insert the section between after the #ATTACKS:;
 
 instead of replacing, based on a variable value, default to replace=false
+
+
+Please create test based on C:\Users\mysti\Desktop\Repositories\autostepper-mod\tests\CẮT ĐÔI NỖI SẦU.mp3.bak
+
+Test insert:
+1. Copy .bak to .sm
+2. Process with insert
+3. Content should match C:\Users\mysti\Desktop\Repositories\autostepper-mod\tests\CẮT ĐÔI NỖI SẦU.mp3.inserted
+
+Test replace:
+1. Copy .bak to .sm
+2. Process with replace
+3. Content should match C:\Users\mysti\Desktop\Repositories\autostepper-mod\tests\CẮT ĐÔI NỖI SẦU.mp3.replaced
+
+Parameterize the test to replace param and expectedFile param so that it reduces test code duplication
